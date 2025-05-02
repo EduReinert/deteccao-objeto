@@ -1,0 +1,7 @@
+kagglehub
+opencv-python
+numpy
+yolov5
+matplotlib
+pandas
+tqdm
