@@ -1,0 +1,5 @@
+image_path,pedestre,bicicleta,ônibus
+dataset_test\bicycle1.jpg,1,1.0,
+dataset_test\bicycle7.jpg,1,1.0,
+dataset_test\bus14.jpg,2,,1.0
+dataset_test\person4.jpg,2,,
