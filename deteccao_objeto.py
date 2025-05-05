@@ -9,6 +9,13 @@ import pandas as pd
 from tqdm import tqdm
 
 # Configuração das classes de interesse (baseado no COCO dataset)
+"""
+O que é? Um conjunto de dados com milhares de imagens e anotações precisas.
+
+Contém? Objetos do cotidiano (pessoas, carros, animais, etc.) em cenários complexos.
+
+Para que serve? Treinar modelos como YOLO, Faster R-CNN, etc., em tarefas (ex: detecção de objetos)
+"""
 CLASSES_OF_INTEREST = {
     0: "pedestre",
     1: "bicicleta",
@@ -65,6 +72,12 @@ def setup_model():
     model.conf = 0.5  # Limite de confiança
     model.iou = 0.45  # Limite de IoU
     #  Limite de Intersection over Union para supressão de detecções redundantes
+    
+    """ 
+    Trata cada detecção pela classe, e não como algo genérico
+    Ex: se houver uma pessoa e um carro próximos, não ignora um deles, mas sim trata os dois.
+    Ignora apenas quando é detectado a mesma classe próxima (pega apenas uma)
+    """
     model.agnostic = False  # Detecção de classes específicas
     
     return model
