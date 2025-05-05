@@ -43,8 +43,11 @@ def get_image_files():
 # 1. Função para baixar e preparar o dataset
 def setup_dataset():
     try:
-        print("Baixando mini-traffic-detection-dataset do Kaggle...")
-        dataset_path = kagglehub.dataset_download("zoltanszekely/mini-traffic-detection-dataset")
+        print("Baixando dataset de imagens do Kaggle...")
+        
+        ### Datasets disponíveis
+        # dataset_path = kagglehub.dataset_download("zoltanszekely/mini-traffic-detection-dataset")
+        dataset_path = kagglehub.dataset_download("farzadnekouei/top-view-vehicle-detection-image-dataset")
         print(f"Dataset baixado em: {dataset_path}")
         
         # Encontrar arquivos de imagem
@@ -180,11 +183,11 @@ def visualize_results(total_counts, df_results):
 # 5. Função principal
 def main():
     # Baixar e configurar dataset
-    # image_files = setup_dataset()
-    # if not image_files:
-    #     return
+    image_files = setup_dataset()
+    if not image_files:
+        return
     
-    image_files = get_image_files()
+    # image_files = get_image_files()
     
     # Configurar modelo
     model = setup_model()
