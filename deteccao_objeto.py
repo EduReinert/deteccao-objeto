@@ -58,11 +58,13 @@ def setup_dataset():
 # 2. Configurar o modelo YOLOv5
 def setup_model():
     print("\nCarregando modelo YOLOv5...")
+    # Carregamento de modelo pré-treinado
     model = yolov5.load('yolov5s.pt')  # Versão small (mais rápida)
     
     # Configurações do modelo
     model.conf = 0.5  # Limite de confiança
     model.iou = 0.45  # Limite de IoU
+    #  Limite de Intersection over Union para supressão de detecções redundantes
     model.agnostic = False  # Detecção de classes específicas
     
     return model
@@ -74,6 +76,7 @@ def process_images(image_files, model, sample_size=None):
     
     # print(image_files)
     
+    # defaultdict -> Cria um dicionário especial que automaticamente inicializa valores inteiros como 0 para qualquer chave nova
     total_counts = defaultdict(int)
     results_data = []
     
@@ -90,9 +93,25 @@ def process_images(image_files, model, sample_size=None):
         
         # Detecção de objetos
         results = model(rgb_img)
+        #pred é 0 pois estamos processando imagens únicas, logo, a pred sempre será de tamanho 1 (index 0)
         detections = results.pred[0]
         
         # Contagem por classe na imagem atual
+        
+        """
+        det[0]: coordenada x do centro da bounding box (normalizada)
+
+        det[1]: coordenada y do centro da bounding box (normalizada)
+
+        det[2]: largura da bounding box (normalizada)
+
+        det[3]: altura da bounding box (normalizada)
+        ^^0-3: localização
+        det[4]: confiança/score da detecção (0 a 1)
+        ^^4: confiança
+        det[5]: ID da classe detectada (como inteiro)
+        """
+        
         img_counts = defaultdict(int)
         for det in detections:
             class_id = int(det[5])
