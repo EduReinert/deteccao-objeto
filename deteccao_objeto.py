@@ -72,7 +72,7 @@ def setup_model():
     model = yolov5.load('yolov5s.pt')  # Versão small (mais rápida)
     
     # Configurações do modelo
-    model.conf = 0.5  # Limite de confiança
+    model.conf = 0.8  # Limite de confiança
     model.iou = 0.45  # Limite de IoU
     #  Limite de Intersection over Union para supressão de detecções redundantes
     
@@ -115,6 +115,7 @@ def process_images(image_files, model, sample_size=None):
         # Contagem por classe na imagem atual
         
         """
+        normalizada -> entre 0 e 1
         det[0]: coordenada x do centro da bounding box (normalizada)
 
         det[1]: coordenada y do centro da bounding box (normalizada)
