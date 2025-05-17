@@ -145,42 +145,6 @@ def process_images(image_files, model, sample_size=None):
     
     return total_counts, pd.DataFrame(results_data)
 
-# 4. Visualização dos resultados
-def visualize_results(total_counts, df_results):
-    plt.figure(figsize=(15, 6))
-    
-    # Gráfico de barras
-    plt.subplot(1, 2, 1)
-    bars = plt.bar(total_counts.keys(), total_counts.values(), color='skyblue')
-    plt.title('Contagem Total de Objetos')
-    plt.xlabel('Classe')
-    plt.ylabel('Quantidade')
-    plt.xticks(rotation=45)
-    
-    # Adicionar valores nas barras
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height,
-                f'{height}',
-                ha='center', va='bottom')
-    
-    # Boxplot da distribuição
-    plt.subplot(1, 2, 2)
-    class_cols = [c for c in CLASSES_OF_INTEREST.values() if c in df_results.columns]
-    if class_cols:
-        df_results[class_cols].plot(kind='box', vert=False)
-        plt.title('Distribuição por Imagem')
-    else:
-        plt.text(0.5, 0.5, 'Sem dados para boxplot', ha='center')
-    
-    plt.tight_layout()
-    plt.show()
-    
-    # Estatísticas
-    if not df_results.empty and class_cols:
-        print("\nEstatísticas por Imagem:")
-        print(df_results[class_cols].describe().round(2))
-
 # 5. Função principal
 def main():
     # Baixar e configurar dataset
@@ -200,9 +164,6 @@ def main():
     print("\n=== RESULTADOS FINAIS ===")
     for obj_type, count in total_counts.items():
         print(f"{obj_type}: {count}")
-    
-    # Visualização
-    visualize_results(total_counts, df_results)
     
     # Exportar resultados
     df_results.to_csv("resultados_deteccao.csv", index=False)
