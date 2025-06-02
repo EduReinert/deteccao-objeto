@@ -72,7 +72,7 @@ def setup_model():
     model = yolov5.load('yolov5s.pt')  # Versão small (mais rápida)
     
     # Configurações do modelo
-    model.conf = 0.8  # Limite de confiança
+    model.conf = 0.5  # Limite de confiança
     model.iou = 0.45  # Limite de IoU
     #  Limite de Intersection over Union para supressão de detecções redundantes
     
@@ -146,7 +146,7 @@ def process_images(image_files, model, sample_size=None):
     return total_counts, pd.DataFrame(results_data)
 
 # 4. Visualização dos resultados
-def visualize_results(total_counts, df_results):
+def visualize_results(total_counts, df_results, model):
     plt.figure(figsize=(15, 10))
     
     # Gráfico 1: Contagem total por classe
@@ -189,29 +189,42 @@ def visualize_results(total_counts, df_results):
     img = cv2.imread(sample_image_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
-    # Adicionar texto com as contagens da primeira imagem
-    counts_text = "\n".join([f"{k}: {v}" for k, v in df_results.iloc[0].items() 
-                           if k != 'image_path' and v > 0])
-    plt.text(0.5, -0.2, counts_text, ha='center', va='center', 
-             transform=plt.gca().transAxes, fontsize=10)
-    plt.imshow(img)
-    plt.title('Exemplo de Imagem')
+    # Processar a imagem com o modelo para obter as bounding boxes
+    results = model(img)
+    rendered_img = results.render()[0]  # Imagem com bounding boxes
+    
+    plt.imshow(rendered_img)
+    plt.title('Exemplo de Imagem com Bounding Boxes')
     plt.axis('off')
     
     plt.tight_layout()
     plt.savefig('resultados_visualizacao.png', bbox_inches='tight')
     plt.show()
     
-    # Visualização adicional: Top 3 imagens com mais detecções
+    # Visualização adicional: Top 3 imagens com mais detecções (com bounding boxes)
     top_images = df_results.nlargest(3, 'total_detected')
     plt.figure(figsize=(15, 8))
+    
+    # Criar diretório para salvar as imagens com bounding boxes
+    os.makedirs('deteccoes', exist_ok=True)
+    
     for i, (_, row) in enumerate(top_images.iterrows(), 1):
-        img = cv2.imread(row['image_path'])
+        img_path = row['image_path']
+        img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
+        # Processar a imagem com o modelo para obter as bounding boxes
+        results = model(img)
+        rendered_img = results.render()[0]  # Imagem com bounding boxes
+        
+        # Salvar a imagem com bounding boxes
+        output_path = os.path.join('deteccoes', f'detected_{os.path.basename(img_path)}')
+        cv2.imwrite(output_path, cv2.cvtColor(rendered_img, cv2.COLOR_RGB2BGR))
+        
+        # Mostrar na visualização
         plt.subplot(2, 3, i)
-        plt.imshow(img)
-        plt.title(f"{row['total_detected']} objetos\n{os.path.basename(row['image_path'])}")
+        plt.imshow(rendered_img)
+        plt.title(f"{row['total_detected']} objetos\n{os.path.basename(img_path)}")
         plt.axis('off')
         
         # Adicionar legenda com contagem por classe
@@ -246,7 +259,7 @@ def main():
         print(f"{obj_type}: {count}")
     
     # Visualização
-    visualize_results(total_counts, df_results)
+    visualize_results(total_counts, df_results, model)
     
     # Exportar resultados
     df_results.to_csv("resultados_deteccao.csv", index=False)
