@@ -245,6 +245,9 @@ def main():
     for obj_type, count in total_counts.items():
         print(f"{obj_type}: {count}")
     
+    # Visualização
+    visualize_results(total_counts, df_results)
+    
     # Exportar resultados
     df_results.to_csv("resultados_deteccao.csv", index=False)
     print("\nResultados salvos em 'resultados_deteccao.csv'")
