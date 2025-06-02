@@ -147,12 +147,14 @@ def process_images(image_files, model, sample_size=None):
 
 # 4. Visualização dos resultados
 def visualize_results(total_counts, df_results):
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(15, 10))
     
-    # Gráfico de barras
-    plt.subplot(1, 2, 1)
-    bars = plt.bar(total_counts.keys(), total_counts.values(), color='skyblue')
-    plt.title('Contagem Total de Objetos')
+    # Gráfico 1: Contagem total por classe
+    plt.subplot(2, 2, 1)
+    classes = list(total_counts.keys())
+    counts = list(total_counts.values())
+    bars = plt.bar(classes, counts, color='skyblue')
+    plt.title('Contagem Total de Objetos Detectados')
     plt.xlabel('Classe')
     plt.ylabel('Quantidade')
     plt.xticks(rotation=45)
@@ -161,25 +163,67 @@ def visualize_results(total_counts, df_results):
     for bar in bars:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2., height,
-                f'{height}',
-                ha='center', va='bottom')
+                 f'{int(height)}',
+                 ha='center', va='bottom')
     
-    # Boxplot da distribuição
-    plt.subplot(1, 2, 2)
-    class_cols = [c for c in CLASSES_OF_INTEREST.values() if c in df_results.columns]
-    if class_cols:
-        df_results[class_cols].plot(kind='box', vert=False)
-        plt.title('Distribuição por Imagem')
-    else:
-        plt.text(0.5, 0.5, 'Sem dados para boxplot', ha='center')
+    # Gráfico 2: Distribuição de detecções por imagem
+    plt.subplot(2, 2, 2)
+    df_results['total_detected'] = df_results.drop('image_path', axis=1).sum(axis=1)
+    detection_counts = df_results['total_detected'].value_counts().sort_index()
+    detection_counts.plot(kind='bar', color='lightgreen')
+    plt.title('Número de Imagens por Quantidade de Objetos')
+    plt.xlabel('Número de Objetos na Imagem')
+    plt.ylabel('Número de Imagens')
+    
+    # Gráfico 3: Proporção de classes detectadas
+    plt.subplot(2, 2, 3)
+    total_objects = sum(total_counts.values())
+    sizes = [count/total_objects for count in counts]
+    plt.pie(sizes, labels=classes, autopct='%1.1f%%', 
+            startangle=90, colors=['gold', 'lightcoral', 'lightskyblue', 'lightgreen', 'violet', 'orange'])
+    plt.title('Proporção de Classes Detectadas')
+    
+    # Gráfico 4: Exemplo de imagem com detecções (primeira imagem do dataset)
+    plt.subplot(2, 2, 4)
+    sample_image_path = df_results.iloc[0]['image_path']
+    img = cv2.imread(sample_image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # Adicionar texto com as contagens da primeira imagem
+    counts_text = "\n".join([f"{k}: {v}" for k, v in df_results.iloc[0].items() 
+                           if k != 'image_path' and v > 0])
+    plt.text(0.5, -0.2, counts_text, ha='center', va='center', 
+             transform=plt.gca().transAxes, fontsize=10)
+    plt.imshow(img)
+    plt.title('Exemplo de Imagem')
+    plt.axis('off')
     
     plt.tight_layout()
+    plt.savefig('resultados_visualizacao.png', bbox_inches='tight')
     plt.show()
     
-    # Estatísticas
-    if not df_results.empty and class_cols:
-        print("\nEstatísticas por Imagem:")
-        print(df_results[class_cols].describe().round(2))
+    # Visualização adicional: Top 3 imagens com mais detecções
+    top_images = df_results.nlargest(3, 'total_detected')
+    plt.figure(figsize=(15, 8))
+    for i, (_, row) in enumerate(top_images.iterrows(), 1):
+        img = cv2.imread(row['image_path'])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        plt.subplot(2, 3, i)
+        plt.imshow(img)
+        plt.title(f"{row['total_detected']} objetos\n{os.path.basename(row['image_path'])}")
+        plt.axis('off')
+        
+        # Adicionar legenda com contagem por classe
+        counts_text = "\n".join([f"{k}: {v}" for k, v in row.items() 
+                               if k not in ['image_path', 'total_detected'] and v > 0])
+        plt.text(0.5, -0.15, counts_text, ha='center', va='center', 
+                 transform=plt.gca().transAxes, fontsize=8)
+    
+    plt.tight_layout()
+    plt.savefig('top_imagens_deteccao.png', bbox_inches='tight')
+    plt.show()
+    
 
 # 5. Função principal
 def main():
@@ -193,7 +237,7 @@ def main():
     # Configurar modelo
     model = setup_model()
     
-    # Processar imagens (usando apenas 100 imagens para demonstração)
+    # Processar imagens
     total_counts, df_results = process_images(image_files, model)
     
     # Resultados
